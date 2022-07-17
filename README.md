@@ -1,6 +1,6 @@
-# Plotly-Guide-for-Financial-Chart
+# Plotly Guide for Financial Chart
 
-
+how to use plotly lib for Financial Chart
 
 
 # import libraries  <br/>
