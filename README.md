@@ -49,7 +49,7 @@ def fetch(symbol: str, timeframe: str, limit: int):
 BTC = fetch('BTC/USDT', '1h', 1000)
 ```
 
-# **OHLC Chart** <br/>
+# **Candlestick Chart** <br/>
 ```
 fig = go.Figure()
 
@@ -64,6 +64,18 @@ fig.show()
 <br/>
 
 ![newplot (5)](https://user-images.githubusercontent.com/102425717/179375003-dca8d0b9-5af3-4dfa-87a6-4c09651374fe.png)<br/>
+
+# **change Candlestick Chart color** <br/>
+
+```
+fig.add_trace(go.Candlestick(
+    x=BTC.index,
+    open=BTC['open'], high=BTC['high'],
+    low=BTC['low'], close=BTC['close'],
+    increasing_line_color='cyan', decreasing_line_color='gray'
+))
+```
+![newplot (10)](https://user-images.githubusercontent.com/102425717/179378535-a0bdf45d-366c-4e01-b3bb-cbba948485c3.png)<br/>
 
 
 # **removing rangeslider** <br/>
