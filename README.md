@@ -105,7 +105,6 @@ fig.add_trace(go.Scatter(x=BTC.index,
 ```
 ![newplot (7)](https://user-images.githubusercontent.com/102425717/179375383-e0f7cb7c-c6eb-4b2a-b7ba-e818605e5c76.png)<br/>
 
-# [**ema**](https://github.com/mohder79/indicators/blob/main/ema.py): <br/>
 
 # **css color link** <br/>
 
