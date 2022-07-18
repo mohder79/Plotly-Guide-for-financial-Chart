@@ -174,12 +174,94 @@ fig.add_trace(go.Bar(x=BTC.index,
 ```
 ![newplot (9)](https://user-images.githubusercontent.com/102425717/179375789-94caf75c-f00f-4934-bc11-b8b53cab885c.png)<br/>
 
+# **visible plot** <br/>
+
+```
+# add visible='legendonly'
+
+fig.add_trace(go.Scatter(x=BTC.index,
+                         y=BTC['short'],
+                         mode='markers',
+                         marker=dict(color='MediumVioletRed', size=12,
+                                     opacity=1),
+                         marker_symbol=6,
+                         name='short signal',
+                         visible='legendonly'))
+```
+
+# **fill between two plot lilke BBband** <br/>
+
+```
+# { bollinger band
+def SMA(data: str = 'BTC', src: str = 'close', length: int = 20):  # sma for middle band
+    return data[src].rolling(window=length).mean()
+
+
+def TP(data: str = 'BTC'):  # hlc/3 (typical price)
+    return(data['high']+data['low']+data['close'])/3
+
+
+def BOLU(data: str = "BTC", src: str = 'tp', length: int = 20, m: int = 2):  # upperband
+    return SMA(data, src, 20)+((m)*data[src].rolling(window=length).std())
+
+
+def BOLD(data: str = 'BTC', src: str = 'tp', length: int = 20, m: int = 2):  # lower band
+    return SMA(data, 'close', 20)-((m)*data[src].rolling(window=length).std())
+# ​}
+
+# { use bollinger band functions to calculate  bbband
+BTC['middelband'] = SMA(BTC, 'close', 20)
+BTC['tp'] = TP(BTC)
+BTC['upperband'] = BOLU(BTC, 'tp')
+BTC['lowerband'] = BOLD(BTC, 'tp')
+# }
+
+fig.add_trace(go.Scatter(x=BTC.index,
+                         y=BTC['upperband'],
+                         fill=None,
+                         mode='lines',
+                         line_color='rgba(0, 0, 255, 0.5)',
+                         line=dict(width=2),
+                         name='upperband',
+                         visible='legendonly'))
+
+fig.add_trace(go.Scatter(x=BTC.index,
+                         y=BTC['lowerband'],
+                         opacity=0.3,
+                         fill='tonexty',
+                         line=dict(width=2),
+                         name='lowerband',
+                         line_color='rgba(0, 0, 255, 0.5)',
+                         mode='lines', fillcolor='rgba(0, 0, 255, 0.1)',
+                         visible='legendonly'))
+```
+![newplot (13)](https://user-images.githubusercontent.com/102425717/179430133-86791680-9c85-4d57-9b8f-984a6713e3bf.png) <br/>
+
+# **css rgba color link** <br/>
+
+[**w3schools**](https://www.w3schools.com/css/css_colors_rgb.asp): <br/>
+
+# **change candlestack color with condition** <br/>
+```
+# { set condition in new dataframe 
+bulish = BTC[(BTC['in_sqz'] == False) & (
+    BTC['close'] > BTC['middelband'])]
+not_bulish = BTC[BTC.index.isin(bulish.index)].index
+# }
+
+fig.add_traces(go.Candlestick(x=billish.index,
+                              open=bulish['open'], high=bulish['high'],
+                              low=bulish['low'], close=bulish['close'],
+                              increasing_line_color='SpringGreen',
+                              decreasing_line_color='DarkGreen',
+                              name='Bulish momentum(+/-)'))
+```
+![newplot (14)](https://user-images.githubusercontent.com/102425717/179430389-ada8f90b-93a8-411e-9234-f04f51349936.png) <br/>
 
 
 # **finaly code** <br/>
 ```
 # { import the libraries
-import imp
 import ccxt
 from datetime import datetime
 import pandas as pd
@@ -218,6 +300,24 @@ def fetch(symbol: str, timeframe: str, limit: int):
 # }
 
 
+# { bollinger band
+def SMA(data: str = 'BTC', src: str = 'close', length: int = 20):  # sma for middle band
+    return data[src].rolling(window=length).mean()
+
+
+def TP(data: str = 'BTC'):  # hlc/3 (typical price)
+    return(data['high']+data['low']+data['close'])/3
+
+
+def BOLU(data: str = "BTC", src: str = 'tp', length: int = 20, m: int = 2):  # upperband
+    return SMA(data, src, 20)+((m)*data[src].rolling(window=length).std())
+
+
+def BOLD(data: str = 'BTC', src: str = 'tp', length: int = 20, m: int = 2):  # lower band
+    return SMA(data, 'close', 20)-((m)*data[src].rolling(window=length).std())
+# ​}
+
+
 # { set the symbol for data function
 BTC = fetch('BTC/USDT', '1h', 1000)
 # }
@@ -234,6 +334,14 @@ BTC.loc[BTC['sam15'] < BTC['close'], 'lower_sma15'] = BTC['sam15']
 # }
 
 
+# { use bollinger band functions to calculate  bbband
+BTC['middelband'] = SMA(BTC, 'close', 20)
+BTC['tp'] = TP(BTC)
+BTC['upperband'] = BOLU(BTC, 'tp')
+BTC['lowerband'] = BOLD(BTC, 'tp')
+# }
+
+
 # { find cross for plot marker
 BTC['signal'] = np.where(
     BTC['close'] > BTC['sam15'], 1, 0)
@@ -247,8 +355,15 @@ BTC['short'] = np.where(
 # }
 
 
+# { set condition in new dataframe
+bulish = BTC[(BTC['close'] > BTC['middelband'])]
+not_bulish = BTC[BTC.index.isin(bulish.index)].index
+# }
+
+
 # {  plot the data
 fig = make_subplots(rows=2, cols=1, shared_xaxes=True)
+#fig = go.Figure()
 
 fig.add_trace(go.Candlestick(x=BTC.index,
                              open=BTC['open'],
@@ -256,6 +371,13 @@ fig.add_trace(go.Candlestick(x=BTC.index,
                              low=BTC['low'],
                              close=BTC['close'],
                              showlegend=False))
+
+fig.add_traces(go.Candlestick(x=bulish.index,
+                              open=bulish['open'], high=bulish['high'],
+                              low=bulish['low'], close=bulish['close'],
+                              increasing_line_color='SpringGreen',
+                              decreasing_line_color='DarkGreen',
+                              name='Bulish momentum(+/-)'))
 
 fig.add_trace(go.Scatter(x=BTC.index,
                          y=BTC['upper_sma15'],
@@ -284,7 +406,8 @@ fig.add_trace(go.Scatter(x=BTC.index,
                          marker=dict(color='MediumVioletRed', size=12,
                                      opacity=1),
                          marker_symbol=6,
-                         name='short signal'))
+                         name='short signal',
+                         visible='legendonly'))
 
 colors = ['green' if row['open'] - row['close'] >= 0
           else 'red' for index, row in BTC.iterrows()]
@@ -293,8 +416,33 @@ fig.add_trace(go.Bar(x=BTC.index,
                      marker_color=colors
                      ), row=2, col=1)
 
+fig.add_trace(go.Scatter(x=BTC.index,
+                         y=BTC['middelband'],
+                         opacity=1,
+                         line=dict(color='orange', width=2),
+                         name='middelband'))
+
+fig.add_trace(go.Scatter(x=BTC.index,
+                         y=BTC['upperband'],
+                         fill=None,
+                         mode='lines',
+                         line_color='rgba(0, 0, 255, 0.5)',
+                         line=dict(width=2),
+                         name='upperband'))
+
+fig.add_trace(go.Scatter(x=BTC.index,
+                         y=BTC['lowerband'],
+                         opacity=0.3,
+                         fill='tonexty',
+                         line=dict(width=2),
+                         name='lowerband',
+                         line_color='rgba(0, 0, 255, 0.5)',
+                         mode='lines', fillcolor='rgba(0, 0, 255, 0.1)'))
+
 fig.show()
 # }
 
 ```
+
+![newplot (15)](https://user-images.githubusercontent.com/102425717/179430447-eaa8a175-f08c-4cf4-a7f3-dd64a7ca4ed3.png) <br/>
 
